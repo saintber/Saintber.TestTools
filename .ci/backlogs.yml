@@ -6,7 +6,9 @@
 trigger:
   tags:
     include:
-      - v*-rc*
+      - v*-dev*
+      - v*-alpha*
+      - v*-beta*
 
 pool:
   vmImage: ubuntu-latest
@@ -14,7 +16,6 @@ pool:
 variables:
   BuildConfiguration: 'Release'
   BuildProjects: '**/*.csproj'
-  PushBranch: 'dev'
 
 steps:
 - checkout: self
@@ -91,16 +92,22 @@ steps:
     packagesToPack: 'src/*/*.nuspec'
     outputDir: '$(Build.ArtifactStagingDirectory)'
 
-# 推送至 GitHub
-- script: |
-    echo "Configuring Git..."
-    git config --global user.email "$(GitHubUserMail)"
-    git config --global user.name "$(GitHubUserName)"
-    git fetch origin
-    git remote set-url origin https://$(GitHubToken)@github.com$(GitHubEndPoint)
-    echo "Pushing to $(PushBranch) branch..."
-    git push -u origin $(PushBranch)
-  displayName: "Push to GitHub $(PushBranch) branch"
+# 單元測試
+- task: DotNetCoreCLI@2
+  displayName: 'Run MSTest with XPlat Code Coverage'
+  inputs:
+    command: test
+    projects: '$(TestProjects)'
+    arguments: '--configuration $(BuildConfiguration) --collect "XPlat Code Coverage"'
+    publishTestResults: true
+
+# 推送測試報告
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish Code Coverage Report'
+  inputs:
+    codeCoverageTool: 'Cobertura'
+    summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+    reportDirectory: '$(Build.ArtifactStagingDirectory)/coverage/html'
 
 # 推送套件
 - task: NuGetCommand@2
