@@ -74,13 +74,14 @@ public static class ExtendedAssert
     public static async Task FilterAppliedAsync<T, TFilter>(
         this Func<TFilter> getCorrectFilterHandler
         , Func<TFilter> getErrorFilterlHandler
-        , Func<TFilter, Task<IEnumerable<T>>> getHandler)
+        , Func<TFilter, Task<IEnumerable<T>>> getHandler
+        , int TestDataCount = 1)
         where TFilter : new()
     {
         // 無輸入條件
         var filter = new TFilter();
         var response = await getHandler(filter);
-        if ((response?.Count() ?? 0) != 1) throw new AssertFailedException("無篩選欄位篩選結果筆數不為1");
+        if ((response?.Count() ?? 0) != TestDataCount) throw new AssertFailedException($"無篩選欄位篩選結果筆數不為 {TestDataCount}");
 
         // 取得欄位
         var filterProperties = typeof(TFilter).GetProperties();
@@ -101,7 +102,7 @@ public static class ExtendedAssert
         // 欄位全代入查詢檢核
         var correctFilter = getCorrectFilterHandler();
         response = await getHandler(correctFilter);
-        if ((response?.Count() ?? 0) != 1) throw new AssertFailedException("代入全正確欄位篩選結果筆數不為1");
+        if ((response?.Count() ?? 0) > 0) throw new AssertFailedException("代入全正確欄位無法篩選到結果");
     }
     #endregion
 
