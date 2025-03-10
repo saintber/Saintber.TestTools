@@ -47,6 +47,9 @@ steps:
   displayName: 'Configure NuGet Sources'
 
 # 還原套件
+- task: NuGetAuthenticate@1
+  displayName: Authenticate to Azure Artifacts
+
 - task: DotNetCoreCLI@2
   displayName: 'Restore NuGet Packages'
   inputs:

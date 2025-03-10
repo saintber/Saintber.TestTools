@@ -102,7 +102,7 @@ public static class ExtendedAssert
         // 欄位全代入查詢檢核
         var correctFilter = getCorrectFilterHandler();
         response = await getHandler(correctFilter);
-        if ((response?.Count() ?? 0) > 0) throw new AssertFailedException("代入全正確欄位無法篩選到結果");
+        if ((response?.Count() ?? 0) < 1) throw new AssertFailedException("代入全正確欄位無法篩選到結果");
     }
     #endregion
 

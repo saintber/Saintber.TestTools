@@ -7,6 +7,10 @@ trigger:
   tags:
     include:
       - v*-rc*
+    exclude:
+      - v*-dev*
+      - v*-alpha*
+      - v*-beta*
 
 pool:
   vmImage: ubuntu-latest
@@ -69,6 +73,9 @@ steps:
   displayName: "Update nuspec version"
 
 # 還原套件
+- task: NuGetAuthenticate@1
+  displayName: Authenticate to Azure Artifacts
+
 - task: DotNetCoreCLI@2
   displayName: 'Restore NuGet Packages'
   inputs:
@@ -92,25 +99,25 @@ steps:
     outputDir: '$(Build.ArtifactStagingDirectory)'
 
 # 推送至 GitHub
-- script: |
-    echo "Configuring Git..."
-    git config --global user.email "$(GitHubUserMail)"
-    git config --global user.name "$(GitHubUserName)"
-    git fetch origin
-    git remote set-url origin https://$(GitHubToken)@github.com$(GitHubEndPoint)
-    echo "Pushing to $(PushBranch) branch..."
-    git push -u origin $(PushBranch)
-  displayName: "Push to GitHub $(PushBranch) branch"
+# - script: |
+    # echo "Configuring Git..."
+    # git config --global user.email "$(GitHubUserMail)"
+    # git config --global user.name "$(GitHubUserName)"
+    # git fetch origin
+    # git remote set-url origin https://$(GitHubToken)@github.com$(GitHubEndPoint)
+    # echo "Pushing to $(PushBranch) branch..."
+    # git push -u origin $(PushBranch)
+  # displayName: "Push to GitHub $(PushBranch) branch"
 
 # 推送套件
 - task: NuGetCommand@2
   displayName: 'Push to Azure Artifact'
-  condition: and(succeeded(), ne(variables['PrivateSource'], ''))
+  condition: and(succeeded(), ne(variables['PrivateFeed'], ''))
   inputs:
     command: 'push'
-    packagestopush: '$(build.artifactstagingdirectory)/*.nupkg'
-    nugetfeedtype: 'internal'
-    publishvstsfeed: $(privatesource)
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: $(PrivateFeed)
 
 - task: NuGetCommand@2
   displayName: 'Push to Nuget.Org'
